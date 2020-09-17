@@ -81,8 +81,12 @@ const FoodDetails: React.FC = () => {
         extras: data.extras.map(extra => ({ ...extra, quantity: 0 })),
       };
 
-      setFood(newData);
-      setExtras(newData.extras);
+      setFood({
+        ...data,
+        formattedPrice: formatValue(data.price),
+      });
+
+      setExtras(data.extras.map(extra => ({ ...extra, quantity: 0 })));
     }
 
     loadFood();
@@ -104,30 +108,30 @@ const FoodDetails: React.FC = () => {
 
   function handleIncrementExtra(id: number): void {
     setExtras(newExtras =>
-      newExtras.map(newExtra => {
-        if (newExtra.id === id) {
-          return {
-            ...newExtra,
-            quantity: newExtra.quantity + 1,
-          };
-        }
-        return newExtra;
-      }),
+      newExtras.map(newExtra =>
+        newExtra.id === id
+          ? {
+              ...newExtra,
+              quantity: newExtra.quantity + 1,
+            }
+          : newExtra,
+      ),
     );
   }
 
   function handleDecrementExtra(id: number): void {
     setExtras(newExtras =>
-      newExtras.map(newExtra => {
-        if (newExtra.id === id) {
-          return {
-            ...newExtra,
-            quantity:
-              newExtra.quantity > 0 ? newExtra.quantity - 1 : newExtra.quantity,
-          };
-        }
-        return newExtra;
-      }),
+      newExtras.map(newExtra =>
+        newExtra.id === id
+          ? {
+              ...newExtra,
+              quantity:
+                newExtra.quantity > 0
+                  ? newExtra.quantity - 1
+                  : newExtra.quantity,
+            }
+          : newExtra,
+      ),
     );
   }
 
@@ -144,22 +148,17 @@ const FoodDetails: React.FC = () => {
   const toggleFavorite = useCallback(async () => {
     if (isFavorite) {
       await api.delete(`favorites/${food.id}`);
-
-      setIsFavorite(false);
     } else {
       await api.post('favorites', food);
-
-      setIsFavorite(true);
     }
+    setIsFavorite(!isFavorite);
   }, [isFavorite, food]);
 
   const cartTotal = useMemo(() => {
     return formatValue(
-      food.price * foodQuantity +
-        extras.reduce<number>(
-          (sum, extra) => sum + extra.quantity * extra.value,
-          0,
-        ),
+      foodQuantity *
+        (food.price +
+          extras.reduce((sum, extra) => sum + extra.quantity * extra.value, 0)),
     );
   }, [extras, food, foodQuantity]);
 
